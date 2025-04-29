@@ -132,13 +132,7 @@ public class SQLParser {
         parseSelectColumns(query);
 
         // Check for typos in FROM keyword if present
-        if (currentTokenIndex < tokens.size() &&
-            isLikelyTypoOf(currentToken(), "FROM") &&
-            !currentToken().getValue().equalsIgnoreCase("FROM")) {
-            throw new SQLParserException("Expected 'FROM', but got '" +
-                                         currentToken().getValue() + "'",
-                                         currentToken().getPosition());
-        }
+        checkIfTypoOf("FROM");
 
         // Parse FROM clause if present
         if (consumeIfMatch(Tokenizer.TokenType.KEYWORD, "FROM")) {
@@ -149,13 +143,7 @@ public class SQLParser {
         parseJoinClauses(query);
 
         // Check for typos in WHERE keyword if present
-        if (currentTokenIndex < tokens.size() &&
-            isLikelyTypoOf(currentToken(), "WHERE") &&
-            !currentToken().getValue().equalsIgnoreCase("WHERE")) {
-            throw new SQLParserException("Expected 'WHERE', but got '" +
-                                         currentToken().getValue() + "'",
-                                         currentToken().getPosition());
-        }
+        checkIfTypoOf("WHERE");
 
         // Parse WHERE clause if present
         if (consumeIfMatch(Tokenizer.TokenType.KEYWORD, "WHERE")) {
@@ -163,13 +151,7 @@ public class SQLParser {
         }
 
         // Check for typos in GROUP keyword if present
-        if (currentTokenIndex < tokens.size() &&
-            isLikelyTypoOf(currentToken(), "GROUP") &&
-            !currentToken().getValue().equalsIgnoreCase("GROUP")) {
-            throw new SQLParserException("Expected 'GROUP', but got '" +
-                                         currentToken().getValue() + "'",
-                                         currentToken().getPosition());
-        }
+        checkIfTypoOf("GROUP");
 
         // Parse GROUP BY clause if present
         if (consumeIfMatch(Tokenizer.TokenType.KEYWORD, "GROUP")) {
@@ -178,13 +160,7 @@ public class SQLParser {
         }
 
         // Check for typos in HAVING keyword if present
-        if (currentTokenIndex < tokens.size() &&
-            isLikelyTypoOf(currentToken(), "HAVING") &&
-            !currentToken().getValue().equalsIgnoreCase("HAVING")) {
-            throw new SQLParserException("Expected 'HAVING', but got '" +
-                                         currentToken().getValue() + "'",
-                                         currentToken().getPosition());
-        }
+        checkIfTypoOf("HAVING");
 
         // Parse HAVING clause if present
         if (consumeIfMatch(Tokenizer.TokenType.KEYWORD, "HAVING")) {
@@ -192,13 +168,7 @@ public class SQLParser {
         }
 
         // Check for typos in ORDER keyword if present
-        if (currentTokenIndex < tokens.size() &&
-            isLikelyTypoOf(currentToken(), "ORDER") &&
-            !currentToken().getValue().equalsIgnoreCase("ORDER")) {
-            throw new SQLParserException("Expected 'ORDER', but got '" +
-                                         currentToken().getValue() + "'",
-                                         currentToken().getPosition());
-        }
+        checkIfTypoOf("ORDER");
 
         // Parse ORDER BY clause if present
         if (consumeIfMatch(Tokenizer.TokenType.KEYWORD, "ORDER")) {
@@ -207,13 +177,7 @@ public class SQLParser {
         }
 
         // Check for typos in LIMIT keyword if present
-        if (currentTokenIndex < tokens.size() &&
-            isLikelyTypoOf(currentToken(), "LIMIT") &&
-            !currentToken().getValue().equalsIgnoreCase("LIMIT")) {
-            throw new SQLParserException("Expected 'LIMIT', but got '" +
-                                         currentToken().getValue() + "'",
-                                         currentToken().getPosition());
-        }
+        checkIfTypoOf("LIMIT");
 
         // Parse LIMIT clause if present
         if (consumeIfMatch(Tokenizer.TokenType.KEYWORD, "LIMIT")) {
@@ -225,13 +189,7 @@ public class SQLParser {
         }
 
         // Check for typos in OFFSET keyword if present
-        if (currentTokenIndex < tokens.size() &&
-            isLikelyTypoOf(currentToken(), "OFFSET") &&
-            !currentToken().getValue().equalsIgnoreCase("OFFSET")) {
-            throw new SQLParserException("Expected 'OFFSET', but got '" +
-                                         currentToken().getValue() + "'",
-                                         currentToken().getPosition());
-        }
+        checkIfTypoOf("OFFSET");
 
         // Parse OFFSET clause if present
         if (consumeIfMatch(Tokenizer.TokenType.KEYWORD, "OFFSET")) {
@@ -246,7 +204,22 @@ public class SQLParser {
     }
 
     /**
-     * Checks if a token is likely a typo of the given keyword.
+     * Checks if the token is a typo of given keyword
+     *
+     * @throws SQLParserException if the token is a typo
+     * */
+    private void checkIfTypoOf(String keyword) {
+        if (currentTokenIndex < tokens.size() &&
+            isLikelyTypoOf(currentToken(), keyword) &&
+            !currentToken().getValue().equalsIgnoreCase(keyword)) {
+            throw new SQLParserException("Expected '"+ keyword +"', but got '" +
+                                         currentToken().getValue() + "'",
+                                         currentToken().getPosition());
+        }
+    }
+
+    /**
+     * Checks if string is likely a typo of the given keyword.
      *
      * @param token The token to check
      * @param keyword The expected keyword
@@ -379,103 +352,162 @@ public class SQLParser {
     private String parseSimpleExpression() {
         StringBuilder expressionBuilder = new StringBuilder();
 
-        // Parse the first token (could be an identifier, literal, or open parenthesis)
+        // Check if the expression starts with a parenthesis
+        if (currentToken().getType() == Tokenizer.TokenType.PARENTHESIS_OPEN) {
+            // Add the opening parenthesis
+            expressionBuilder.append(consumeToken().getValue());
+
+            // Parse the expression inside the parentheses
+            int parenCount = 1;
+            while (currentTokenIndex < tokens.size() && parenCount > 0) {
+                if (currentToken().getType() == Tokenizer.TokenType.PARENTHESIS_OPEN) {
+                    parenCount++;
+                }
+                else if (currentToken().getType() == Tokenizer.TokenType.PARENTHESIS_CLOSE) {
+                    parenCount--;
+                }
+
+                expressionBuilder.append(consumeToken().getValue());
+            }
+
+            // If we exited the loop without balancing parentheses
+            if (parenCount > 0) {
+                throw new SQLParserException("Unbalanced parentheses in expression");
+            }
+
+            // Continue parsing the rest of the expression (if any)
+            if (currentTokenIndex < tokens.size() &&
+                (currentToken().getType() == Tokenizer.TokenType.OPERATOR ||
+                 currentToken().getType() == Tokenizer.TokenType.STAR)) {
+                // Continue parsing operators and operands
+                while (parseExpressionPart(expressionBuilder)) {
+                    // Continue as long as we can parse expression parts
+                }
+            }
+
+        return expressionBuilder.toString();
+        }
+        // Parse the first token (could be an identifier, literal, etc.)
         Tokenizer.Token token = consumeToken();
         expressionBuilder.append(token.getValue());
 
         // Handle table.column notation
         if (token.getType() == Tokenizer.TokenType.IDENTIFIER &&
-            consumeIfMatch(Tokenizer.TokenType.DOT, ".")) {
-            expressionBuilder.append(".");
-            Tokenizer.Token columnToken = consumeToken();
-            expressionBuilder.append(columnToken.getValue());
-        }
+            currentTokenIndex < tokens.size() &&
+            currentToken().getType() == Tokenizer.TokenType.DOT) {
+            expressionBuilder.append(consumeToken().getValue()); // Add the dot
 
-        // Handle operations in expressions (any operator)
-        while (currentTokenIndex < tokens.size()) {
-            // Stop if we reach certain SQL keywords that indicate the end of the expression
-            if (currentToken().getType() == Tokenizer.TokenType.KEYWORD &&
-                (currentToken().getValue().equalsIgnoreCase("AS") ||
-                 currentToken().getValue().equalsIgnoreCase("FROM") ||
-                 currentToken().getValue().equalsIgnoreCase("WHERE") ||
-                 currentToken().getValue().equalsIgnoreCase("GROUP") ||
-                 currentToken().getValue().equalsIgnoreCase("HAVING") ||
-                 currentToken().getValue().equalsIgnoreCase("ORDER") ||
-                 currentToken().getValue().equalsIgnoreCase("LIMIT") ||
-                 currentToken().getValue().equalsIgnoreCase("OFFSET"))) {
-                break;
-            }
-
-            // Stop if we reach a comma or other special characters that indicate the end of the expression
-            if (currentToken().getType() == Tokenizer.TokenType.COMMA ||
-                currentToken().getType() == Tokenizer.TokenType.PARENTHESIS_CLOSE) {
-                break;
-            }
-
-            // If it's an operator, include it and the next value in the expression
-            if (currentToken().getType() == Tokenizer.TokenType.OPERATOR) {
-                // Add the operator
-                Tokenizer.Token operatorToken = consumeToken();
-                expressionBuilder.append(operatorToken.getValue());
-
-                // Look for opening parenthesis, which might follow an operator
-                if (currentTokenIndex < tokens.size() &&
-                    currentToken().getType() == Tokenizer.TokenType.PARENTHESIS_OPEN) {
-                    expressionBuilder.append(consumeToken().getValue()); // Add the opening parenthesis
-
-                    // Parse the expression inside the parentheses
-                    int parenCount = 1;
-                    while (currentTokenIndex < tokens.size() && parenCount > 0) {
-                        if (currentToken().getType() == Tokenizer.TokenType.PARENTHESIS_OPEN) {
-                            parenCount++;
-                        } else if (currentToken().getType() == Tokenizer.TokenType.PARENTHESIS_CLOSE) {
-                            parenCount--;
-                        }
-
-                        expressionBuilder.append(consumeToken().getValue());
-                    }
-
-                    // If we exited the loop without balancing parentheses
-                    if (parenCount > 0) {
-                        throw new SQLParserException("Unbalanced parentheses in expression");
-                    }
-
-                    continue; // Continue to the next token
-                }
-
-                // Add the next value (if available)
-                if (currentTokenIndex < tokens.size() &&
-                    (currentToken().getType() == Tokenizer.TokenType.IDENTIFIER ||
-                     currentToken().getType() == Tokenizer.TokenType.NUMERIC_LITERAL ||
-                     currentToken().getType() == Tokenizer.TokenType.STRING_LITERAL)) {
-                    Tokenizer.Token valueToken = consumeToken();
-                    expressionBuilder.append(valueToken.getValue());
-
-                    // Handle table.column notation after an operator
-                    if (valueToken.getType() == Tokenizer.TokenType.IDENTIFIER &&
-                        currentTokenIndex < tokens.size() &&
-                        currentToken().getType() == Tokenizer.TokenType.DOT) {
-                        expressionBuilder.append(consumeToken().getValue()); // Add the dot
-
-                        if (currentTokenIndex < tokens.size() &&
-                            currentToken().getType() == Tokenizer.TokenType.IDENTIFIER) {
-                            expressionBuilder.append(consumeToken().getValue()); // Add the column name
-                        } else {
-                            throw new SQLParserException("Expected identifier after '.' in expression");
-                        }
-                    }
-                } else {
-                    throw new SQLParserException("Expected value after operator",
-                                                 currentTokenIndex < tokens.size() ?
-                                                 currentToken().getPosition() :
-                                                 tokens.get(tokens.size() - 1).getPosition());
-                }
+            if (currentTokenIndex < tokens.size() &&
+                currentToken().getType() == Tokenizer.TokenType.IDENTIFIER) {
+                expressionBuilder.append(consumeToken().getValue()); // Add the column name
             } else {
-                // If it's not an operator, we've reached the end of this expression
-                break;
+                throw new SQLParserException("Expected identifier after '.' in expression");
             }
         }
+
+        // Parse the rest of the expression (operators, etc.)
+        while (parseExpressionPart(expressionBuilder)) {
+            // Continue as long as we can parse expression parts
+        }
+
         return expressionBuilder.toString();
+    }
+
+    /**
+     * Parses a part of an expression (operator and operand) and adds it to the expression builder.
+     *
+     * @param expressionBuilder The StringBuilder to append to
+     * @return true if a part was parsed, false if the expression is complete
+     */
+    private boolean parseExpressionPart(StringBuilder expressionBuilder) {
+        // Check if we've reached the end of tokens
+        if (currentTokenIndex >= tokens.size()) {
+            return false;
+        }
+
+        // Stop if we reach certain SQL keywords that indicate the end of the expression
+        if (currentToken().getType() == Tokenizer.TokenType.KEYWORD &&
+            (currentToken().getValue().equalsIgnoreCase("AS") ||
+             currentToken().getValue().equalsIgnoreCase("FROM") ||
+             currentToken().getValue().equalsIgnoreCase("WHERE") ||
+             currentToken().getValue().equalsIgnoreCase("GROUP") ||
+             currentToken().getValue().equalsIgnoreCase("HAVING") ||
+             currentToken().getValue().equalsIgnoreCase("ORDER") ||
+             currentToken().getValue().equalsIgnoreCase("LIMIT") ||
+             currentToken().getValue().equalsIgnoreCase("OFFSET"))) {
+            return false;
+        }
+
+        // Stop if we reach a comma or other special characters that indicate the end of the expression
+        if (currentToken().getType() == Tokenizer.TokenType.COMMA ||
+            currentToken().getType() == Tokenizer.TokenType.PARENTHESIS_CLOSE) {
+            return false;
+        }
+
+        // Check if we have an operator
+        if (currentToken().getType() == Tokenizer.TokenType.OPERATOR ||
+             currentToken().getType() == Tokenizer.TokenType.STAR) {
+            // Add the operator
+            expressionBuilder.append(consumeToken().getValue());
+
+            // Check for opening parenthesis after the operator
+            if (currentTokenIndex < tokens.size() &&
+                currentToken().getType() == Tokenizer.TokenType.PARENTHESIS_OPEN) {
+                // Add the opening parenthesis
+                expressionBuilder.append(consumeToken().getValue());
+
+                // Parse the expression inside the parentheses
+                int parenCount = 1;
+                while (currentTokenIndex < tokens.size() && parenCount > 0) {
+                    if (currentToken().getType() == Tokenizer.TokenType.PARENTHESIS_OPEN) {
+                        parenCount++;
+                    } else if (currentToken().getType() == Tokenizer.TokenType.PARENTHESIS_CLOSE) {
+                        parenCount--;
+                    }
+
+                    expressionBuilder.append(consumeToken().getValue());
+                }
+
+                // If we exited the loop without balancing parentheses
+                if (parenCount > 0) {
+                    throw new SQLParserException("Unbalanced parentheses in expression");
+                }
+
+                return true;
+            }
+
+            // Check for the next value
+            if (currentTokenIndex < tokens.size() &&
+                (currentToken().getType() == Tokenizer.TokenType.IDENTIFIER ||
+                 currentToken().getType() == Tokenizer.TokenType.NUMERIC_LITERAL ||
+                 currentToken().getType() == Tokenizer.TokenType.STRING_LITERAL)) {
+                Tokenizer.Token valueToken = consumeToken();
+                expressionBuilder.append(valueToken.getValue());
+
+                // Handle table.column notation after an operator
+                if (valueToken.getType() == Tokenizer.TokenType.IDENTIFIER &&
+                    currentTokenIndex < tokens.size() &&
+                    currentToken().getType() == Tokenizer.TokenType.DOT) {
+                    expressionBuilder.append(consumeToken().getValue()); // Add the dot
+
+                    if (currentTokenIndex < tokens.size() &&
+                        currentToken().getType() == Tokenizer.TokenType.IDENTIFIER) {
+                        expressionBuilder.append(consumeToken().getValue()); // Add the column name
+                    } else {
+                        throw new SQLParserException("Expected identifier after '.' in expression");
+                    }
+                }
+
+                return true;
+            } else {
+                throw new SQLParserException("Expected value after operator",
+                                             currentTokenIndex < tokens.size() ?
+                                             currentToken().getPosition() :
+                                             tokens.get(tokens.size() - 1).getPosition());
+            }
+        }
+
+        return false; // No more parts to parse
     }
 
     /**

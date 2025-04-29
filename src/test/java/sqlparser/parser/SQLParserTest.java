@@ -314,6 +314,106 @@ public class SQLParserTest {
         assertEquals("OR", query.getWhereCondition().getLogicalOperator());
     }
 
+    @Test
+    @DisplayName("Test SELECT with arithmetic expression and parentheses")
+    void testSelectWithArithmeticExpressionAndParentheses() {
+        String sql = "SELECT price * (1 - discount) AS final_price FROM products";
+        Query query = parser.parse(sql);
+
+        // Verify query structure
+        assertEquals(1, query.getColumns().size());
+        assertEquals("price*(1-discount)", query.getColumns().get(0).getExpression());
+        assertEquals("final_price", query.getColumns().get(0).getAlias());
+        assertEquals(1, query.getFromSources().size());
+        assertEquals("products", query.getFromSources().get(0).getTableName());
+    }
+
+    @Test
+    @DisplayName("Test SELECT with parenthesized expression and multiplication")
+    void testSelectWithParenthesizedExpressionAndMultiplication() {
+        String sql = "SELECT (a + b) * c AS calculation FROM math_table";
+        Query query = parser.parse(sql);
+
+        // Verify query structure
+        assertEquals(1, query.getColumns().size());
+        assertEquals("(a+b)*c", query.getColumns().get(0).getExpression());
+        assertEquals("calculation", query.getColumns().get(0).getAlias());
+        assertEquals(1, query.getFromSources().size());
+        assertEquals("math_table", query.getFromSources().get(0).getTableName());
+    }
+
+    @Test
+    @DisplayName("Test SELECT with comparison expression")
+    void testSelectWithComparisonExpression() {
+        String sql = "SELECT column1 = column2 AS is_equal FROM comparison_table";
+        Query query = parser.parse(sql);
+
+        // Verify query structure
+        assertEquals(1, query.getColumns().size());
+        assertEquals("column1=column2", query.getColumns().get(0).getExpression());
+        assertEquals("is_equal", query.getColumns().get(0).getAlias());
+        assertEquals(1, query.getFromSources().size());
+        assertEquals("comparison_table", query.getFromSources().get(0).getTableName());
+    }
+
+    @Test
+    @DisplayName("Test SELECT with CASE expression")
+    // TODO Implement case expression parsing
+    void testSelectWithCaseExpression() {
+        String sql = "SELECT CASE WHEN price > 100 THEN 'Expensive' ELSE 'Cheap' END AS price_category FROM products";
+
+        // This test currently verifies that the parser doesn't throw an exception
+        // for this complex CASE expression, but doesn't verify the exact parsing structure
+        Exception exception = null;
+        try {
+            Query query = parser.parse(sql);
+
+            // We at least expect the column alias to be captured correctly
+            assertEquals(1, query.getColumns().size());
+            assertEquals("price_category", query.getColumns().get(0).getAlias());
+            assertEquals(1, query.getFromSources().size());
+            assertEquals("products", query.getFromSources().get(0).getTableName());
+        } catch (Exception e) {
+            exception = e;
+        }
+
+        assertNull(exception, "Parser should not throw an exception for CASE expressions");
+    }
+
+    @Test
+    @DisplayName("Test SELECT with multiple expressions without FROM")
+    void testSelectWithComplexExpressionsWithoutFrom() {
+        String sql = "SELECT 5 * (2 + 3) AS result1, (10 / 2) - 1 AS result2";
+        Query query = parser.parse(sql);
+
+        // Verify query structure
+        assertEquals(2, query.getColumns().size());
+        assertEquals("5*(2+3)", query.getColumns().get(0).getExpression());
+        assertEquals("result1", query.getColumns().get(0).getAlias());
+        assertEquals("(10/2)-1", query.getColumns().get(1).getExpression());
+        assertEquals("result2", query.getColumns().get(1).getAlias());
+        assertTrue(query.getFromSources().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Test SELECT with mixed table.column and expression")
+    void testSelectWithMixedTableColumnAndExpression() {
+        String sql = "SELECT a.value + b.value * 2 AS calculated_value FROM table1 a, table2 b";
+        Query query = parser.parse(sql);
+
+        // Verify query structure
+        assertEquals(1, query.getColumns().size());
+        assertEquals("a.value+b.value*2", query.getColumns().get(0).getExpression());
+        assertEquals("calculated_value", query.getColumns().get(0).getAlias());
+        assertEquals(1, query.getFromSources().size());
+        assertEquals("table1", query.getFromSources().get(0).getTableName());
+        assertEquals("a", query.getFromSources().get(0).getAlias());
+        assertEquals(1, query.getJoins().size());
+        assertEquals(JoinType.IMPLICIT, query.getJoins().get(0).getType());
+        assertEquals("table2", query.getJoins().get(0).getTableSource().getTableName());
+        assertEquals("b", query.getJoins().get(0).getTableSource().getAlias());
+    }
+
     // Typo detection tests
     @Test
     @DisplayName("Test parsing with FROM typo")

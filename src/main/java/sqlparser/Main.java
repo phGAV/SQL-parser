@@ -2,6 +2,7 @@ package main.java.sqlparser;
 
 import main.java.sqlparser.model.*;
 import main.java.sqlparser.parser.*;
+import main.java.sqlparser.util.*;
 
 /**
  * Main class to demonstrate the SQL parser functionality.
@@ -90,7 +91,7 @@ public class Main {
 
                 // Format the query and print it
                 System.out.println("Formatted SQL:");
-                System.out.println(query.toString());
+                System.out.println(SQLFormatter.format(query));
 
             } catch (SQLParserException e) {
                 System.out.println("Parsing Error: " + e.getMessage());
@@ -128,7 +129,7 @@ public class Main {
 
             // Print the modified query
             System.out.println("\nModified Query:");
-            System.out.println(query.toString());
+            System.out.println(SQLFormatter.format(query));
 
         } catch (SQLParserException e) {
             System.out.println("Parsing Error: " + e.getMessage());

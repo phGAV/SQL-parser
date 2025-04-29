@@ -39,15 +39,15 @@ The project is organized into the following packages:
 
 ### Parser
 
-- `SQLParser`: The main parser class that converts SQL strings to Query objects - TODO
+- `SQLParser`: The main parser class that converts SQL strings to Query objects
 
 ### Utilities
 
-- `SQLFormatter`: Formats Query objects back into readable SQL strings - TODO
+- `SQLFormatter`: Formats Query objects back into readable SQL strings
 
 ## Usage
 
-The parser can be used to: TODO
+The parser can be used to:
 
 1. Parse SQL queries into structured objects
 2. Analyze and modify query components programmatically
@@ -55,7 +55,29 @@ The parser can be used to: TODO
 
 ### Example
 
-TODO
+```java
+// Create a parser
+SQLParser parser = new SQLParser();
+
+// Parse a SQL query
+String sql = "SELECT author.name, count(book.id) as book_count " +
+             "FROM author JOIN book ON author.id = book.author_id " +
+             "GROUP BY author.name HAVING COUNT(*) > 1";
+Query query = parser.parse(sql);
+
+// Access query components
+List<Column> columns = query.getColumns();
+List<TableSource> tables = query.getFromSources();
+Condition whereCondition = query.getWhereCondition();
+
+// Modify query programmatically
+query.setLimit(10);
+query.addOrderByColumn(new OrderByColumn("book_count", false)); // DESC
+
+// Generate formatted SQL
+String formattedSql = SQLFormatter.format(query);
+System.out.println(formattedSql);
+```
 
 ## Supported Features
 
@@ -79,11 +101,11 @@ TODO
 
 ## Testing
 
-TODO
+`./gradlew test` - for running unit tests
 
 ## Running the Demo
 
-TODO
+`./gradlew run` - for running the main class with example SQL queries
 
 ## Requirements
 

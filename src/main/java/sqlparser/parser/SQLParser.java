@@ -1,6 +1,7 @@
 package main.java.sqlparser.parser;
 
 import main.java.sqlparser.model.*;
+import sqlparser.util.LevenshteinDistance;
 
 import java.util.*;
 
@@ -130,6 +131,15 @@ public class SQLParser {
         // Parse columns
         parseSelectColumns(query);
 
+        // Check for typos in FROM keyword if present
+        if (currentTokenIndex < tokens.size() &&
+            isLikelyTypoOf(currentToken(), "FROM") &&
+            !currentToken().getValue().equalsIgnoreCase("FROM")) {
+            throw new SQLParserException("Expected 'FROM', but got '" +
+                                         currentToken().getValue() + "'",
+                                         currentToken().getPosition());
+        }
+
         // Parse FROM clause if present
         if (consumeIfMatch(Tokenizer.TokenType.KEYWORD, "FROM")) {
             parseFromClause(query);
@@ -138,9 +148,27 @@ public class SQLParser {
         // Parse JOIN clauses if present
         parseJoinClauses(query);
 
+        // Check for typos in WHERE keyword if present
+        if (currentTokenIndex < tokens.size() &&
+            isLikelyTypoOf(currentToken(), "WHERE") &&
+            !currentToken().getValue().equalsIgnoreCase("WHERE")) {
+            throw new SQLParserException("Expected 'WHERE', but got '" +
+                                         currentToken().getValue() + "'",
+                                         currentToken().getPosition());
+        }
+
         // Parse WHERE clause if present
         if (consumeIfMatch(Tokenizer.TokenType.KEYWORD, "WHERE")) {
             query.setWhereCondition(parseCondition());
+        }
+
+        // Check for typos in GROUP keyword if present
+        if (currentTokenIndex < tokens.size() &&
+            isLikelyTypoOf(currentToken(), "GROUP") &&
+            !currentToken().getValue().equalsIgnoreCase("GROUP")) {
+            throw new SQLParserException("Expected 'GROUP', but got '" +
+                                         currentToken().getValue() + "'",
+                                         currentToken().getPosition());
         }
 
         // Parse GROUP BY clause if present
@@ -149,15 +177,42 @@ public class SQLParser {
             parseGroupByClause(query);
         }
 
+        // Check for typos in HAVING keyword if present
+        if (currentTokenIndex < tokens.size() &&
+            isLikelyTypoOf(currentToken(), "HAVING") &&
+            !currentToken().getValue().equalsIgnoreCase("HAVING")) {
+            throw new SQLParserException("Expected 'HAVING', but got '" +
+                                         currentToken().getValue() + "'",
+                                         currentToken().getPosition());
+        }
+
         // Parse HAVING clause if present
         if (consumeIfMatch(Tokenizer.TokenType.KEYWORD, "HAVING")) {
             query.setHavingCondition(parseCondition());
+        }
+
+        // Check for typos in ORDER keyword if present
+        if (currentTokenIndex < tokens.size() &&
+            isLikelyTypoOf(currentToken(), "ORDER") &&
+            !currentToken().getValue().equalsIgnoreCase("ORDER")) {
+            throw new SQLParserException("Expected 'ORDER', but got '" +
+                                         currentToken().getValue() + "'",
+                                         currentToken().getPosition());
         }
 
         // Parse ORDER BY clause if present
         if (consumeIfMatch(Tokenizer.TokenType.KEYWORD, "ORDER")) {
             expectToken(Tokenizer.TokenType.KEYWORD, "BY");
             parseOrderByClause(query);
+        }
+
+        // Check for typos in LIMIT keyword if present
+        if (currentTokenIndex < tokens.size() &&
+            isLikelyTypoOf(currentToken(), "LIMIT") &&
+            !currentToken().getValue().equalsIgnoreCase("LIMIT")) {
+            throw new SQLParserException("Expected 'LIMIT', but got '" +
+                                         currentToken().getValue() + "'",
+                                         currentToken().getPosition());
         }
 
         // Parse LIMIT clause if present
@@ -167,6 +222,15 @@ public class SQLParser {
                 throw new SQLParserException("Expected numeric literal for LIMIT", limitToken.getPosition());
             }
             query.setLimit(Integer.parseInt(limitToken.getValue()));
+        }
+
+        // Check for typos in OFFSET keyword if present
+        if (currentTokenIndex < tokens.size() &&
+            isLikelyTypoOf(currentToken(), "OFFSET") &&
+            !currentToken().getValue().equalsIgnoreCase("OFFSET")) {
+            throw new SQLParserException("Expected 'OFFSET', but got '" +
+                                         currentToken().getValue() + "'",
+                                         currentToken().getPosition());
         }
 
         // Parse OFFSET clause if present
@@ -179,6 +243,32 @@ public class SQLParser {
         }
 
         return query;
+    }
+
+    /**
+     * Checks if a token is likely a typo of the given keyword.
+     *
+     * @param token The token to check
+     * @param keyword The expected keyword
+     * @return true if the token is likely a typo of the keyword
+     */
+    private boolean isLikelyTypoOf(Tokenizer.Token token, String keyword) {
+
+        String tokenValue = token.getValue().toUpperCase();
+        String expectedKeyword = keyword.toUpperCase();
+
+        // Method 1: Check if token starts with the first letter of the keyword
+        // and has at least 60% of characters in common
+        if (tokenValue.startsWith(expectedKeyword.substring(0, 1))) {
+            // Calculate Levenshtein distance
+            int distance = LevenshteinDistance.compute(tokenValue, expectedKeyword);
+            int maxLength = Math.max(tokenValue.length(), expectedKeyword.length());
+
+            // If the token is within 40% edit distance of the expected keyword
+            return distance <= maxLength * 0.4;
+        }
+
+        return false;
     }
 
     /**
@@ -266,13 +356,13 @@ public class SQLParser {
                 }
             } else if (currentToken().getType() == Tokenizer.TokenType.IDENTIFIER &&
                        !matchToken(Tokenizer.TokenType.COMMA, ",") &&
-                       !matchToken(Tokenizer.TokenType.KEYWORD, "FROM") &&
-                       !matchToken(Tokenizer.TokenType.KEYWORD, "WHERE") &&
-                       !matchToken(Tokenizer.TokenType.KEYWORD, "GROUP") &&
-                       !matchToken(Tokenizer.TokenType.KEYWORD, "HAVING") &&
-                       !matchToken(Tokenizer.TokenType.KEYWORD, "ORDER") &&
-                       !matchToken(Tokenizer.TokenType.KEYWORD, "LIMIT") &&
-                       !matchToken(Tokenizer.TokenType.KEYWORD, "OFFSET")) {
+                       !matchToken(Tokenizer.TokenType.KEYWORD, "FROM") && !isLikelyTypoOf(currentToken(), "FROM") &&
+                       !matchToken(Tokenizer.TokenType.KEYWORD, "WHERE") && !isLikelyTypoOf(currentToken(), "WHERE") &&
+                       !matchToken(Tokenizer.TokenType.KEYWORD, "GROUP") && !isLikelyTypoOf(currentToken(), "GROUP") &&
+                       !matchToken(Tokenizer.TokenType.KEYWORD, "HAVING") && !isLikelyTypoOf(currentToken(), "HAVING") &&
+                       !matchToken(Tokenizer.TokenType.KEYWORD, "ORDER") && !isLikelyTypoOf(currentToken(), "ORDER") &&
+                       !matchToken(Tokenizer.TokenType.KEYWORD, "LIMIT") && !isLikelyTypoOf(currentToken(), "LIMIT") &&
+                       !matchToken(Tokenizer.TokenType.KEYWORD, "OFFSET") && !isLikelyTypoOf(currentToken(), "OFFSET")) {
                 // Implicit alias (no AS keyword)
                 alias = consumeToken().getValue();
             }
@@ -301,6 +391,90 @@ public class SQLParser {
             expressionBuilder.append(columnToken.getValue());
         }
 
+        // Handle operations in expressions (any operator)
+        while (currentTokenIndex < tokens.size()) {
+            // Stop if we reach certain SQL keywords that indicate the end of the expression
+            if (currentToken().getType() == Tokenizer.TokenType.KEYWORD &&
+                (currentToken().getValue().equalsIgnoreCase("AS") ||
+                 currentToken().getValue().equalsIgnoreCase("FROM") ||
+                 currentToken().getValue().equalsIgnoreCase("WHERE") ||
+                 currentToken().getValue().equalsIgnoreCase("GROUP") ||
+                 currentToken().getValue().equalsIgnoreCase("HAVING") ||
+                 currentToken().getValue().equalsIgnoreCase("ORDER") ||
+                 currentToken().getValue().equalsIgnoreCase("LIMIT") ||
+                 currentToken().getValue().equalsIgnoreCase("OFFSET"))) {
+                break;
+            }
+
+            // Stop if we reach a comma or other special characters that indicate the end of the expression
+            if (currentToken().getType() == Tokenizer.TokenType.COMMA ||
+                currentToken().getType() == Tokenizer.TokenType.PARENTHESIS_CLOSE) {
+                break;
+            }
+
+            // If it's an operator, include it and the next value in the expression
+            if (currentToken().getType() == Tokenizer.TokenType.OPERATOR) {
+                // Add the operator
+                Tokenizer.Token operatorToken = consumeToken();
+                expressionBuilder.append(operatorToken.getValue());
+
+                // Look for opening parenthesis, which might follow an operator
+                if (currentTokenIndex < tokens.size() &&
+                    currentToken().getType() == Tokenizer.TokenType.PARENTHESIS_OPEN) {
+                    expressionBuilder.append(consumeToken().getValue()); // Add the opening parenthesis
+
+                    // Parse the expression inside the parentheses
+                    int parenCount = 1;
+                    while (currentTokenIndex < tokens.size() && parenCount > 0) {
+                        if (currentToken().getType() == Tokenizer.TokenType.PARENTHESIS_OPEN) {
+                            parenCount++;
+                        } else if (currentToken().getType() == Tokenizer.TokenType.PARENTHESIS_CLOSE) {
+                            parenCount--;
+                        }
+
+                        expressionBuilder.append(consumeToken().getValue());
+                    }
+
+                    // If we exited the loop without balancing parentheses
+                    if (parenCount > 0) {
+                        throw new SQLParserException("Unbalanced parentheses in expression");
+                    }
+
+                    continue; // Continue to the next token
+                }
+
+                // Add the next value (if available)
+                if (currentTokenIndex < tokens.size() &&
+                    (currentToken().getType() == Tokenizer.TokenType.IDENTIFIER ||
+                     currentToken().getType() == Tokenizer.TokenType.NUMERIC_LITERAL ||
+                     currentToken().getType() == Tokenizer.TokenType.STRING_LITERAL)) {
+                    Tokenizer.Token valueToken = consumeToken();
+                    expressionBuilder.append(valueToken.getValue());
+
+                    // Handle table.column notation after an operator
+                    if (valueToken.getType() == Tokenizer.TokenType.IDENTIFIER &&
+                        currentTokenIndex < tokens.size() &&
+                        currentToken().getType() == Tokenizer.TokenType.DOT) {
+                        expressionBuilder.append(consumeToken().getValue()); // Add the dot
+
+                        if (currentTokenIndex < tokens.size() &&
+                            currentToken().getType() == Tokenizer.TokenType.IDENTIFIER) {
+                            expressionBuilder.append(consumeToken().getValue()); // Add the column name
+                        } else {
+                            throw new SQLParserException("Expected identifier after '.' in expression");
+                        }
+                    }
+                } else {
+                    throw new SQLParserException("Expected value after operator",
+                                                 currentTokenIndex < tokens.size() ?
+                                                 currentToken().getPosition() :
+                                                 tokens.get(tokens.size() - 1).getPosition());
+                }
+            } else {
+                // If it's not an operator, we've reached the end of this expression
+                break;
+            }
+        }
         return expressionBuilder.toString();
     }
 
@@ -397,19 +571,19 @@ public class SQLParser {
                 } else if (currentToken().getType() == Tokenizer.TokenType.IDENTIFIER ||
                            currentToken().getType() == Tokenizer.TokenType.KEYWORD) {
                     // Check if the next token is not a reserved keyword for clauses
-                    if (!matchToken(Tokenizer.TokenType.KEYWORD, "ON") &&
-                        !matchToken(Tokenizer.TokenType.KEYWORD, "JOIN") &&
-                        !matchToken(Tokenizer.TokenType.KEYWORD, "INNER") &&
-                        !matchToken(Tokenizer.TokenType.KEYWORD, "LEFT") &&
-                        !matchToken(Tokenizer.TokenType.KEYWORD, "RIGHT") &&
-                        !matchToken(Tokenizer.TokenType.KEYWORD, "FULL") &&
-                        !matchToken(Tokenizer.TokenType.KEYWORD, "CROSS") &&
-                        !matchToken(Tokenizer.TokenType.KEYWORD, "WHERE") &&
-                        !matchToken(Tokenizer.TokenType.KEYWORD, "GROUP") &&
-                        !matchToken(Tokenizer.TokenType.KEYWORD, "HAVING") &&
-                        !matchToken(Tokenizer.TokenType.KEYWORD, "ORDER") &&
-                        !matchToken(Tokenizer.TokenType.KEYWORD, "LIMIT") &&
-                        !matchToken(Tokenizer.TokenType.KEYWORD, "OFFSET") &&
+                    if (!matchToken(Tokenizer.TokenType.KEYWORD, "ON") && !isLikelyTypoOf(currentToken(), "ON") &&
+                        !matchToken(Tokenizer.TokenType.KEYWORD, "JOIN") && !isLikelyTypoOf(currentToken(), "JOIN") &&
+                        !matchToken(Tokenizer.TokenType.KEYWORD, "INNER") && !isLikelyTypoOf(currentToken(), "INNER") &&
+                        !matchToken(Tokenizer.TokenType.KEYWORD, "LEFT") && !isLikelyTypoOf(currentToken(), "LEFT") &&
+                        !matchToken(Tokenizer.TokenType.KEYWORD, "RIGHT") && !isLikelyTypoOf(currentToken(), "RIGHT") &&
+                        !matchToken(Tokenizer.TokenType.KEYWORD, "FULL") && !isLikelyTypoOf(currentToken(), "FULL") &&
+                        !matchToken(Tokenizer.TokenType.KEYWORD, "CROSS") && !isLikelyTypoOf(currentToken(), "CROSS") &&
+                        !matchToken(Tokenizer.TokenType.KEYWORD, "WHERE") && !isLikelyTypoOf(currentToken(), "WHERE") &&
+                        !matchToken(Tokenizer.TokenType.KEYWORD, "GROUP") && !isLikelyTypoOf(currentToken(), "GROUP") &&
+                        !matchToken(Tokenizer.TokenType.KEYWORD, "HAVING") && !isLikelyTypoOf(currentToken(), "HAVING") &&
+                        !matchToken(Tokenizer.TokenType.KEYWORD, "ORDER") && !isLikelyTypoOf(currentToken(), "ORDER") &&
+                        !matchToken(Tokenizer.TokenType.KEYWORD, "LIMIT") && !isLikelyTypoOf(currentToken(), "LIMIT") &&
+                        !matchToken(Tokenizer.TokenType.KEYWORD, "OFFSET") && !isLikelyTypoOf(currentToken(), "OFFSET") &&
                         !matchToken(Tokenizer.TokenType.COMMA, ",")) {
                         // Implicit alias without AS
                         alias = consumeToken().getValue();

@@ -75,7 +75,7 @@ public class Tokenizer {
     private static final Pattern QUOTED_IDENTIFIER_PATTERN = Pattern.compile("^\"([^\"]|\"\")*\"");
     private static final Pattern STRING_LITERAL_PATTERN = Pattern.compile("^'([^']|'')*'");
     private static final Pattern NUMERIC_LITERAL_PATTERN = Pattern.compile("^\\d+(\\.\\d+)?([eE][+-]?\\d+)?");
-    private static final Pattern OPERATOR_PATTERN = Pattern.compile("^(=|<>|!=|<=|>=|<|>|\\+|-|\\*|/|%|\\|\\||\\&\\&)");
+    private static final Pattern OPERATOR_PATTERN = Pattern.compile("^(=|<>|!=|<=|>=|<|>|\\+|-|\\*|/|%|\\|\\||&&)");
     private static final Pattern WHITESPACE_PATTERN = Pattern.compile("^\\s+");
     private static final Pattern SINGLE_LINE_COMMENT_PATTERN = Pattern.compile("^--[^\\n]*\\n?");
     private static final Pattern MULTI_LINE_COMMENT_PATTERN = Pattern.compile("^/\\*.*?\\*/", Pattern.DOTALL);
@@ -200,23 +200,5 @@ public class Tokenizer {
 
         // If we get here, we couldn't match a token
         return null;
-    }
-
-    /**
-     * Removes whitespace and comments from a list of tokens.
-     *
-     * @param tokens The list of tokens to filter
-     * @return A new list with whitespace and comments removed
-     */
-    public static List<Token> removeWhitespaceAndComments(List<Token> tokens) {
-        List<Token> filtered = new ArrayList<>();
-
-        for (Token token : tokens) {
-            if (token.getType() != TokenType.WHITESPACE && token.getType() != TokenType.COMMENT) {
-                filtered.add(token);
-            }
-        }
-
-        return filtered;
     }
 }

@@ -123,7 +123,7 @@ public class Condition {
         }
 
         if (nextCondition != null && logicalOperator != null) {
-            sb.append(" ").append(logicalOperator).append(" ").append(nextCondition.toString());
+            sb.append(" ").append(logicalOperator).append(" ").append(nextCondition);
         }
 
         return sb.toString();

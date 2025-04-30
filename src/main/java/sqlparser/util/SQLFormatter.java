@@ -288,8 +288,6 @@ public class SQLFormatter {
      * @param indentLevel The number of indents to append
      */
     private static void appendIndent(StringBuilder sb, int indentLevel) {
-        for (int i = 0; i < indentLevel; i++) {
-            sb.append(INDENT);
-        }
+        sb.append(INDENT.repeat(Math.max(0, indentLevel)));
     }
 }

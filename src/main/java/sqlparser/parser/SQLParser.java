@@ -460,7 +460,7 @@ public class SQLParser {
                 throw new SQLParserException("Expected value after operator",
                                              tokenHelper.hasMoreTokens() ?
                                              tokenHelper.getCurrentIndex() :
-                                             tokenHelper.tokens.get(tokenHelper.tokens.size() - 1).getPosition());
+                                             tokenHelper.tokens.getLast().getPosition());
             }
         }
 
@@ -617,7 +617,7 @@ public class SQLParser {
                     throw new SQLParserException("Expected ON or USING clause after JOIN",
                                                  tokenHelper.hasMoreTokens() ?
                                                  tokenHelper.currentToken().getPosition() :
-                                                 tokenHelper.tokens.get(tokenHelper.tokens.size() - 1).getPosition());
+                                                 tokenHelper.tokens.getLast().getPosition());
                 }
             } else if (joinType != JoinType.CROSS) {
                 // We're at the end of tokens but need an ON or USING clause

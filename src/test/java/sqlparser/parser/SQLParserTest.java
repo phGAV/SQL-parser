@@ -417,9 +417,7 @@ public class SQLParserTest {
     void testParsingFromTypo() {
         String sql = "SELECT * FROMM book";
 
-        Exception exception = assertThrows(SQLParserException.class, () -> {
-            parser.parse(sql);
-        });
+        Exception exception = assertThrows(SQLParserException.class, () -> parser.parse(sql));
 
         assertTrue(exception.getMessage().contains("Expected 'FROM'"));
     }
@@ -429,9 +427,7 @@ public class SQLParserTest {
     void testParsingWhereTypo() {
         String sql = "SELECT * FROM book WEHRE price > 10";
 
-        Exception exception = assertThrows(SQLParserException.class, () -> {
-            parser.parse(sql);
-        });
+        Exception exception = assertThrows(SQLParserException.class, () -> parser.parse(sql));
 
         assertTrue(exception.getMessage().contains("Expected 'WHERE'"));
     }
@@ -441,9 +437,7 @@ public class SQLParserTest {
     void testParsingGroupTypo() {
         String sql = "SELECT category, COUNT(*) FROM book GRUOP BY category";
 
-        Exception exception = assertThrows(SQLParserException.class, () -> {
-            parser.parse(sql);
-        });
+        Exception exception = assertThrows(SQLParserException.class, () -> parser.parse(sql));
 
         assertTrue(exception.getMessage().contains("Expected 'GROUP'"));
     }
@@ -453,9 +447,7 @@ public class SQLParserTest {
     void testParsingHavingTypo() {
         String sql = "SELECT category, COUNT(*) FROM book GROUP BY category HAVVING COUNT(*) > 5";
 
-        Exception exception = assertThrows(SQLParserException.class, () -> {
-            parser.parse(sql);
-        });
+        Exception exception = assertThrows(SQLParserException.class, () -> parser.parse(sql));
 
         assertTrue(exception.getMessage().contains("Expected 'HAVING'"));
     }
@@ -465,9 +457,7 @@ public class SQLParserTest {
     void testParsingOrderTypo() {
         String sql = "SELECT * FROM book ORDERR BY price DESC";
 
-        Exception exception = assertThrows(SQLParserException.class, () -> {
-            parser.parse(sql);
-        });
+        Exception exception = assertThrows(SQLParserException.class, () -> parser.parse(sql));
 
         assertTrue(exception.getMessage().contains("Expected 'ORDER'"));
     }
@@ -477,9 +467,7 @@ public class SQLParserTest {
     void testParsingLimitTypo() {
         String sql = "SELECT * FROM book LIMT 10";
 
-        Exception exception = assertThrows(SQLParserException.class, () -> {
-            parser.parse(sql);
-        });
+        Exception exception = assertThrows(SQLParserException.class, () -> parser.parse(sql));
 
         assertTrue(exception.getMessage().contains("Expected 'LIMIT'"));
     }
@@ -489,9 +477,7 @@ public class SQLParserTest {
     void testParsingOffsetTypo() {
         String sql = "SELECT * FROM book LIMIT 10 OFSET 5";
 
-        Exception exception = assertThrows(SQLParserException.class, () -> {
-            parser.parse(sql);
-        });
+        Exception exception = assertThrows(SQLParserException.class, () -> parser.parse(sql));
 
         assertTrue(exception.getMessage().contains("Expected 'OFFSET'"));
     }
@@ -577,9 +563,7 @@ public class SQLParserTest {
     void testMissingSelectKeyword() {
         String sql = "* FROM book";
 
-        Exception exception = assertThrows(SQLParserException.class, () -> {
-            parser.parse(sql);
-        });
+        Exception exception = assertThrows(SQLParserException.class, () -> parser.parse(sql));
 
         assertTrue(exception.getMessage().contains("Expected 'SELECT'"));
     }
@@ -589,9 +573,7 @@ public class SQLParserTest {
     void testUnbalancedParentheses() {
         String sql = "SELECT (a + b * c FROM table1";
 
-        Exception exception = assertThrows(SQLParserException.class, () -> {
-            parser.parse(sql);
-        });
+        Exception exception = assertThrows(SQLParserException.class, () -> parser.parse(sql));
 
         assertTrue(exception.getMessage().contains("Unbalanced parentheses") ||
                    exception.getMessage().contains("Expected expression"));
@@ -602,9 +584,7 @@ public class SQLParserTest {
     void testMissingSubqueryAlias() {
         String sql = "SELECT * FROM (SELECT id FROM products)";
 
-        Exception exception = assertThrows(SQLParserException.class, () -> {
-            parser.parse(sql);
-        });
+        Exception exception = assertThrows(SQLParserException.class, () -> parser.parse(sql));
 
         assertTrue(exception.getMessage().contains("alias"));
     }
@@ -614,9 +594,7 @@ public class SQLParserTest {
     void testMissingOnClauseInJoin() {
         String sql = "SELECT * FROM table1 INNER JOIN table2";
 
-        Exception exception = assertThrows(SQLParserException.class, () -> {
-            parser.parse(sql);
-        });
+        Exception exception = assertThrows(SQLParserException.class, () -> parser.parse(sql));
 
         assertTrue(exception.getMessage().contains("ON") ||
                    exception.getMessage().contains("USING"));
@@ -627,9 +605,7 @@ public class SQLParserTest {
     void testInvalidOperatorInWhereClause() {
         String sql = "SELECT * FROM table1 WHERE a !! b";
 
-        Exception exception = assertThrows(SQLParserException.class, () -> {
-            parser.parse(sql);
-        });
+        Exception exception = assertThrows(SQLParserException.class, () -> parser.parse(sql));
 
         assertTrue(exception.getMessage().contains("Invalid token"));
     }
@@ -639,9 +615,7 @@ public class SQLParserTest {
     void testUnexpectedEndOfQuery() {
         String sql = "SELECT * FROM";
 
-        Exception exception = assertThrows(SQLParserException.class, () -> {
-            parser.parse(sql);
-        });
+        Exception exception = assertThrows(SQLParserException.class, () -> parser.parse(sql));
 
         assertTrue(exception.getMessage().contains("Expected") ||
                    exception.getMessage().contains("end of query"));

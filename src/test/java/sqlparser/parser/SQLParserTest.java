@@ -1,8 +1,6 @@
-package test.java.sqlparser.parser;
+package sqlparser.parser;
 
-import main.java.sqlparser.model.*;
-import main.java.sqlparser.parser.*;
-import main.java.sqlparser.util.*;
+import sqlparser.model.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,9 +27,9 @@ public class SQLParserTest {
 
         // Verify query structure
         assertEquals(1, query.getColumns().size());
-        assertEquals("*", query.getColumns().get(0).getExpression());
+        assertEquals("*", query.getColumns().getFirst().getExpression());
         assertEquals(1, query.getFromSources().size());
-        assertEquals("book", query.getFromSources().get(0).getTableName());
+        assertEquals("book", query.getFromSources().getFirst().getTableName());
         assertTrue(query.getJoins().isEmpty());
         assertNull(query.getWhereCondition());
         assertTrue(query.getGroupByColumns().isEmpty());
@@ -81,12 +79,12 @@ public class SQLParserTest {
 
         // Verify JOIN clause
         assertEquals(1, query.getJoins().size());
-        assertEquals(JoinType.INNER, query.getJoins().get(0).getType());
-        assertEquals("book", query.getJoins().get(0).getTableSource().getTableName());
-        assertNotNull(query.getJoins().get(0).getOnCondition());
-        assertEquals("author.id", query.getJoins().get(0).getOnCondition().getLeftExpression());
-        assertEquals("=", query.getJoins().get(0).getOnCondition().getOperator());
-        assertEquals("book.author_id", query.getJoins().get(0).getOnCondition().getRightExpression());
+        assertEquals(JoinType.INNER, query.getJoins().getFirst().getType());
+        assertEquals("book", query.getJoins().getFirst().getTableSource().getTableName());
+        assertNotNull(query.getJoins().getFirst().getOnCondition());
+        assertEquals("author.id", query.getJoins().getFirst().getOnCondition().getLeftExpression());
+        assertEquals("=", query.getJoins().getFirst().getOnCondition().getOperator());
+        assertEquals("book.author_id", query.getJoins().getFirst().getOnCondition().getRightExpression());
     }
 
     @Test
@@ -97,10 +95,10 @@ public class SQLParserTest {
 
         // Verify FROM sources and implicit join
         assertEquals(1, query.getFromSources().size());
-        assertEquals("author", query.getFromSources().get(0).getTableName());
+        assertEquals("author", query.getFromSources().getFirst().getTableName());
         assertEquals(1, query.getJoins().size());
-        assertEquals(JoinType.IMPLICIT, query.getJoins().get(0).getType());
-        assertEquals("book", query.getJoins().get(0).getTableSource().getTableName());
+        assertEquals(JoinType.IMPLICIT, query.getJoins().getFirst().getType());
+        assertEquals("book", query.getJoins().getFirst().getTableSource().getTableName());
     }
 
     @Test
@@ -111,7 +109,7 @@ public class SQLParserTest {
 
         // Verify GROUP BY clause
         assertEquals(1, query.getGroupByColumns().size());
-        assertEquals("category", query.getGroupByColumns().get(0).getExpression());
+        assertEquals("category", query.getGroupByColumns().getFirst().getExpression());
 
         // Verify aggregation function
         assertEquals(2, query.getColumns().size());
@@ -131,7 +129,7 @@ public class SQLParserTest {
 
         // Verify GROUP BY clause
         assertEquals(1, query.getGroupByColumns().size());
-        assertEquals("author.name", query.getGroupByColumns().get(0).getExpression());
+        assertEquals("author.name", query.getGroupByColumns().getFirst().getExpression());
 
         // Verify HAVING clause
         assertNotNull(query.getHavingCondition());
@@ -148,8 +146,8 @@ public class SQLParserTest {
 
         // Verify ORDER BY clause
         assertEquals(2, query.getOrderByColumns().size());
-        assertEquals("price", query.getOrderByColumns().get(0).getColumn());
-        assertFalse(query.getOrderByColumns().get(0).isAscending());
+        assertEquals("price", query.getOrderByColumns().getFirst().getColumn());
+        assertFalse(query.getOrderByColumns().getFirst().isAscending());
         assertEquals("title", query.getOrderByColumns().get(1).getColumn());
         assertTrue(query.getOrderByColumns().get(1).isAscending());
     }
@@ -173,16 +171,16 @@ public class SQLParserTest {
 
         // Verify subquery
         assertEquals(1, query.getFromSources().size());
-        assertTrue(query.getFromSources().get(0).isSubquery());
-        assertEquals("expensive_books", query.getFromSources().get(0).getAlias());
+        assertTrue(query.getFromSources().getFirst().isSubquery());
+        assertEquals("expensive_books", query.getFromSources().getFirst().getAlias());
 
         // Verify subquery structure
-        Query subquery = query.getFromSources().get(0).getSubquery();
+        Query subquery = query.getFromSources().getFirst().getSubquery();
         assertEquals(2, subquery.getColumns().size());
-        assertEquals("id", subquery.getColumns().get(0).getExpression());
+        assertEquals("id", subquery.getColumns().getFirst().getExpression());
         assertEquals("title", subquery.getColumns().get(1).getExpression());
         assertEquals(1, subquery.getFromSources().size());
-        assertEquals("book", subquery.getFromSources().get(0).getTableName());
+        assertEquals("book", subquery.getFromSources().getFirst().getTableName());
         assertNotNull(subquery.getWhereCondition());
         assertEquals("price", subquery.getWhereCondition().getLeftExpression());
         assertEquals(">", subquery.getWhereCondition().getOperator());
@@ -206,7 +204,7 @@ public class SQLParserTest {
         assertEquals(3, query.getColumns().size());
         assertEquals(1, query.getFromSources().size());
         assertEquals(1, query.getJoins().size());
-        assertEquals(JoinType.LEFT, query.getJoins().get(0).getType());
+        assertEquals(JoinType.LEFT, query.getJoins().getFirst().getType());
         assertNotNull(query.getWhereCondition());
         assertEquals(1, query.getGroupByColumns().size());
         assertNotNull(query.getHavingCondition());
@@ -223,9 +221,9 @@ public class SQLParserTest {
         // Verify DISTINCT flag is set
         assertTrue(query.isDistinct());
         assertEquals(1, query.getColumns().size());
-        assertEquals("category", query.getColumns().get(0).getExpression());
+        assertEquals("category", query.getColumns().getFirst().getExpression());
         assertEquals(1, query.getFromSources().size());
-        assertEquals("book", query.getFromSources().get(0).getTableName());
+        assertEquals("book", query.getFromSources().getFirst().getTableName());
     }
 
     @Test
@@ -236,8 +234,8 @@ public class SQLParserTest {
 
         // Verify query structure
         assertEquals(1, query.getColumns().size());
-        assertEquals("1", query.getColumns().get(0).getExpression());
-        assertEquals("constant_value", query.getColumns().get(0).getAlias());
+        assertEquals("1", query.getColumns().getFirst().getExpression());
+        assertEquals("constant_value", query.getColumns().getFirst().getAlias());
         assertTrue(query.getFromSources().isEmpty());
         assertTrue(query.getJoins().isEmpty());
         assertNull(query.getWhereCondition());
@@ -251,8 +249,8 @@ public class SQLParserTest {
 
         // Verify query structure
         assertEquals(3, query.getColumns().size());
-        assertEquals("1", query.getColumns().get(0).getExpression());
-        assertEquals("num", query.getColumns().get(0).getAlias());
+        assertEquals("1", query.getColumns().getFirst().getExpression());
+        assertEquals("num", query.getColumns().getFirst().getAlias());
         assertEquals("'Hello'", query.getColumns().get(1).getExpression());
         assertEquals("greeting", query.getColumns().get(1).getAlias());
         assertEquals("2+2", query.getColumns().get(2).getExpression());
@@ -271,18 +269,18 @@ public class SQLParserTest {
         // Verify query structure
         assertEquals(3, query.getColumns().size());
         assertEquals(1, query.getFromSources().size());
-        assertEquals("author", query.getFromSources().get(0).getTableName());
-        assertEquals("a", query.getFromSources().get(0).getAlias());
+        assertEquals("author", query.getFromSources().getFirst().getTableName());
+        assertEquals("a", query.getFromSources().getFirst().getAlias());
 
         // Verify joins
         assertEquals(2, query.getJoins().size());
 
         // First join
-        assertEquals(JoinType.INNER, query.getJoins().get(0).getType());
-        assertEquals("b", query.getJoins().get(0).getTableSource().getAlias());
-        assertEquals("book", query.getJoins().get(0).getTableSource().getTableName());
-        assertNotNull(query.getJoins().get(0).getOnCondition());
-        assertEquals("a.id", query.getJoins().get(0).getOnCondition().getLeftExpression());
+        assertEquals(JoinType.INNER, query.getJoins().getFirst().getType());
+        assertEquals("b", query.getJoins().getFirst().getTableSource().getAlias());
+        assertEquals("book", query.getJoins().getFirst().getTableSource().getTableName());
+        assertNotNull(query.getJoins().getFirst().getOnCondition());
+        assertEquals("a.id", query.getJoins().getFirst().getOnCondition().getLeftExpression());
         assertEquals("=", query.getJoins().get(0).getOnCondition().getOperator());
         assertEquals("b.author_id", query.getJoins().get(0).getOnCondition().getRightExpression());
 
@@ -304,9 +302,9 @@ public class SQLParserTest {
 
         // Verify query structure
         assertEquals(1, query.getColumns().size());
-        assertEquals("*", query.getColumns().get(0).getExpression());
+        assertEquals("*", query.getColumns().getFirst().getExpression());
         assertEquals(1, query.getFromSources().size());
-        assertEquals("book", query.getFromSources().get(0).getTableName());
+        assertEquals("book", query.getFromSources().getFirst().getTableName());
 
         // Verify complex WHERE condition
         assertNotNull(query.getWhereCondition());
@@ -322,10 +320,10 @@ public class SQLParserTest {
 
         // Verify query structure
         assertEquals(1, query.getColumns().size());
-        assertEquals("price*(1-discount)", query.getColumns().get(0).getExpression());
-        assertEquals("final_price", query.getColumns().get(0).getAlias());
+        assertEquals("price*(1-discount)", query.getColumns().getFirst().getExpression());
+        assertEquals("final_price", query.getColumns().getFirst().getAlias());
         assertEquals(1, query.getFromSources().size());
-        assertEquals("products", query.getFromSources().get(0).getTableName());
+        assertEquals("products", query.getFromSources().getFirst().getTableName());
     }
 
     @Test
@@ -336,10 +334,10 @@ public class SQLParserTest {
 
         // Verify query structure
         assertEquals(1, query.getColumns().size());
-        assertEquals("(a+b)*c", query.getColumns().get(0).getExpression());
-        assertEquals("calculation", query.getColumns().get(0).getAlias());
+        assertEquals("(a+b)*c", query.getColumns().getFirst().getExpression());
+        assertEquals("calculation", query.getColumns().getFirst().getAlias());
         assertEquals(1, query.getFromSources().size());
-        assertEquals("math_table", query.getFromSources().get(0).getTableName());
+        assertEquals("math_table", query.getFromSources().getFirst().getTableName());
     }
 
     @Test
@@ -350,10 +348,10 @@ public class SQLParserTest {
 
         // Verify query structure
         assertEquals(1, query.getColumns().size());
-        assertEquals("column1=column2", query.getColumns().get(0).getExpression());
-        assertEquals("is_equal", query.getColumns().get(0).getAlias());
+        assertEquals("column1=column2", query.getColumns().getFirst().getExpression());
+        assertEquals("is_equal", query.getColumns().getFirst().getAlias());
         assertEquals(1, query.getFromSources().size());
-        assertEquals("comparison_table", query.getFromSources().get(0).getTableName());
+        assertEquals("comparison_table", query.getFromSources().getFirst().getTableName());
     }
 
     @Test
@@ -369,9 +367,9 @@ public class SQLParserTest {
 
             // We at least expect the column alias to be captured correctly
             assertEquals(1, query.getColumns().size());
-            assertEquals("price_category", query.getColumns().get(0).getAlias());
+            assertEquals("price_category", query.getColumns().getFirst().getAlias());
             assertEquals(1, query.getFromSources().size());
-            assertEquals("products", query.getFromSources().get(0).getTableName());
+            assertEquals("products", query.getFromSources().getFirst().getTableName());
         } catch (Exception e) {
             exception = e;
         }
@@ -387,8 +385,8 @@ public class SQLParserTest {
 
         // Verify query structure
         assertEquals(2, query.getColumns().size());
-        assertEquals("5*(2+3)", query.getColumns().get(0).getExpression());
-        assertEquals("result1", query.getColumns().get(0).getAlias());
+        assertEquals("5*(2+3)", query.getColumns().getFirst().getExpression());
+        assertEquals("result1", query.getColumns().getFirst().getAlias());
         assertEquals("(10/2)-1", query.getColumns().get(1).getExpression());
         assertEquals("result2", query.getColumns().get(1).getAlias());
         assertTrue(query.getFromSources().isEmpty());
@@ -402,15 +400,15 @@ public class SQLParserTest {
 
         // Verify query structure
         assertEquals(1, query.getColumns().size());
-        assertEquals("a.value+b.value*2", query.getColumns().get(0).getExpression());
-        assertEquals("calculated_value", query.getColumns().get(0).getAlias());
+        assertEquals("a.value+b.value*2", query.getColumns().getFirst().getExpression());
+        assertEquals("calculated_value", query.getColumns().getFirst().getAlias());
         assertEquals(1, query.getFromSources().size());
-        assertEquals("table1", query.getFromSources().get(0).getTableName());
-        assertEquals("a", query.getFromSources().get(0).getAlias());
+        assertEquals("table1", query.getFromSources().getFirst().getTableName());
+        assertEquals("a", query.getFromSources().getFirst().getAlias());
         assertEquals(1, query.getJoins().size());
-        assertEquals(JoinType.IMPLICIT, query.getJoins().get(0).getType());
-        assertEquals("table2", query.getJoins().get(0).getTableSource().getTableName());
-        assertEquals("b", query.getJoins().get(0).getTableSource().getAlias());
+        assertEquals(JoinType.IMPLICIT, query.getJoins().getFirst().getType());
+        assertEquals("table2", query.getJoins().getFirst().getTableSource().getTableName());
+        assertEquals("b", query.getJoins().getFirst().getTableSource().getAlias());
     }
 
     // Typo detection tests
@@ -508,10 +506,10 @@ public class SQLParserTest {
         // Verify query structure
         assertEquals(1, query.getColumns().size());
         assertEquals("CASE WHEN price>100 THEN 'Expensive' WHEN price>50 THEN 'Moderate' ELSE 'Cheap' END",
-                     query.getColumns().get(0).getExpression());
-        assertEquals("price_category", query.getColumns().get(0).getAlias());
+                     query.getColumns().getFirst().getExpression());
+        assertEquals("price_category", query.getColumns().getFirst().getAlias());
         assertEquals(1, query.getFromSources().size());
-        assertEquals("products", query.getFromSources().get(0).getTableName());
+        assertEquals("products", query.getFromSources().getFirst().getTableName());
     }
 
     @Test
@@ -523,10 +521,10 @@ public class SQLParserTest {
         // Verify query structure
         assertEquals(1, query.getColumns().size());
         assertEquals("CASE category WHEN 'Electronics' THEN 1.1 WHEN 'Books' THEN 1.05 ELSE 1.0 END",
-                     query.getColumns().get(0).getExpression());
-        assertEquals("tax_multiplier", query.getColumns().get(0).getAlias());
+                     query.getColumns().getFirst().getExpression());
+        assertEquals("tax_multiplier", query.getColumns().getFirst().getAlias());
         assertEquals(1, query.getFromSources().size());
-        assertEquals("products", query.getFromSources().get(0).getTableName());
+        assertEquals("products", query.getFromSources().getFirst().getTableName());
     }
 
     @Test
@@ -537,7 +535,7 @@ public class SQLParserTest {
 
         // Verify query structure
         assertEquals(3, query.getColumns().size());
-        assertEquals("id", query.getColumns().get(0).getExpression());
+        assertEquals("id", query.getColumns().getFirst().getExpression());
         assertEquals("name", query.getColumns().get(1).getExpression());
         assertEquals("CASE WHEN price>100 THEN 'High' ELSE 'Low' END",
                      query.getColumns().get(2).getExpression());
@@ -552,7 +550,7 @@ public class SQLParserTest {
 
         // Verify query structure
         assertEquals(1, query.getColumns().size());
-        assertEquals("*", query.getColumns().get(0).getExpression());
+        assertEquals("*", query.getColumns().getFirst().getExpression());
         assertEquals(1, query.getFromSources().size());
         assertNotNull(query.getWhereCondition());
         String whereCondition = query.getWhereCondition().toString();
@@ -567,10 +565,85 @@ public class SQLParserTest {
 
         // Verify query structure
         assertEquals(1, query.getColumns().size());
-        assertEquals("*", query.getColumns().get(0).getExpression());
+        assertEquals("*", query.getColumns().getFirst().getExpression());
         assertEquals(1, query.getFromSources().size());
         assertEquals(2, query.getOrderByColumns().size());
-        assertTrue(query.getOrderByColumns().get(0).getColumn().contains("CASE WHEN category='Priority' THEN 1 ELSE 2 END"));
+        assertTrue(query.getOrderByColumns().getFirst().getColumn().contains("CASE WHEN category='Priority' THEN 1 ELSE 2 END"));
         assertEquals("name", query.getOrderByColumns().get(1).getColumn());
+    }
+
+    @Test
+    @DisplayName("Test missing SELECT keyword")
+    void testMissingSelectKeyword() {
+        String sql = "* FROM book";
+
+        Exception exception = assertThrows(SQLParserException.class, () -> {
+            parser.parse(sql);
+        });
+
+        assertTrue(exception.getMessage().contains("Expected 'SELECT'"));
+    }
+
+    @Test
+    @DisplayName("Test unbalanced parentheses in expressions")
+    void testUnbalancedParentheses() {
+        String sql = "SELECT (a + b * c FROM table1";
+
+        Exception exception = assertThrows(SQLParserException.class, () -> {
+            parser.parse(sql);
+        });
+
+        assertTrue(exception.getMessage().contains("Unbalanced parentheses") ||
+                   exception.getMessage().contains("Expected expression"));
+    }
+
+    @Test
+    @DisplayName("Test missing alias in subquery")
+    void testMissingSubqueryAlias() {
+        String sql = "SELECT * FROM (SELECT id FROM products)";
+
+        Exception exception = assertThrows(SQLParserException.class, () -> {
+            parser.parse(sql);
+        });
+
+        assertTrue(exception.getMessage().contains("alias"));
+    }
+
+    @Test
+    @DisplayName("Test missing ON clause in JOIN")
+    void testMissingOnClauseInJoin() {
+        String sql = "SELECT * FROM table1 INNER JOIN table2";
+
+        Exception exception = assertThrows(SQLParserException.class, () -> {
+            parser.parse(sql);
+        });
+
+        assertTrue(exception.getMessage().contains("ON") ||
+                   exception.getMessage().contains("USING"));
+    }
+
+    @Test
+    @DisplayName("Test invalid operator in WHERE clause")
+    void testInvalidOperatorInWhereClause() {
+        String sql = "SELECT * FROM table1 WHERE a !! b";
+
+        Exception exception = assertThrows(SQLParserException.class, () -> {
+            parser.parse(sql);
+        });
+
+        assertTrue(exception.getMessage().contains("Invalid token"));
+    }
+
+    @Test
+    @DisplayName("Test unexpected end of query")
+    void testUnexpectedEndOfQuery() {
+        String sql = "SELECT * FROM";
+
+        Exception exception = assertThrows(SQLParserException.class, () -> {
+            parser.parse(sql);
+        });
+
+        assertTrue(exception.getMessage().contains("Expected") ||
+                   exception.getMessage().contains("end of query"));
     }
 }

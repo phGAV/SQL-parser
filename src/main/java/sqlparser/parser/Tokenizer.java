@@ -18,7 +18,8 @@ public class Tokenizer {
       "SELECT", "FROM", "WHERE", "GROUP", "BY", "HAVING", "ORDER", "LIMIT", "OFFSET",
       "JOIN", "INNER", "LEFT", "RIGHT", "FULL", "OUTER", "CROSS", "ON", "USING",
       "AND", "OR", "NOT", "AS", "DISTINCT", "COUNT", "SUM", "AVG", "MIN", "MAX",
-      "UNION", "ALL", "IN", "EXISTS", "BETWEEN", "LIKE", "IS", "NULL", "ASC", "DESC"
+      "UNION", "ALL", "IN", "EXISTS", "BETWEEN", "LIKE", "IS", "NULL", "ASC", "DESC",
+      "CASE", "WHEN", "THEN", "ELSE", "END"
     ));
 
     // Token types

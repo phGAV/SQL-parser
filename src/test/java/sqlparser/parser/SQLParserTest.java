@@ -358,7 +358,6 @@ public class SQLParserTest {
 
     @Test
     @DisplayName("Test SELECT with CASE expression")
-    // TODO Implement case expression parsing
     void testSelectWithCaseExpression() {
         String sql = "SELECT CASE WHEN price > 100 THEN 'Expensive' ELSE 'Cheap' END AS price_category FROM products";
 
@@ -497,5 +496,81 @@ public class SQLParserTest {
         });
 
         assertTrue(exception.getMessage().contains("Expected 'OFFSET'"));
+    }
+
+    // Test CASE expression
+    @Test
+    @DisplayName("Test SELECT with searched CASE expression")
+    void testSelectWithSearchedCaseExpression() {
+        String sql = "SELECT CASE WHEN price > 100 THEN 'Expensive' WHEN price > 50 THEN 'Moderate' ELSE 'Cheap' END AS price_category FROM products";
+        Query query = parser.parse(sql);
+
+        // Verify query structure
+        assertEquals(1, query.getColumns().size());
+        assertEquals("CASE WHEN price>100 THEN 'Expensive' WHEN price>50 THEN 'Moderate' ELSE 'Cheap' END",
+                     query.getColumns().get(0).getExpression());
+        assertEquals("price_category", query.getColumns().get(0).getAlias());
+        assertEquals(1, query.getFromSources().size());
+        assertEquals("products", query.getFromSources().get(0).getTableName());
+    }
+
+    @Test
+    @DisplayName("Test SELECT with simple CASE expression")
+    void testSelectWithSimpleCaseExpression() {
+        String sql = "SELECT CASE category WHEN 'Electronics' THEN 1.1 WHEN 'Books' THEN 1.05 ELSE 1.0 END AS tax_multiplier FROM products";
+        Query query = parser.parse(sql);
+
+        // Verify query structure
+        assertEquals(1, query.getColumns().size());
+        assertEquals("CASE category WHEN 'Electronics' THEN 1.1 WHEN 'Books' THEN 1.05 ELSE 1.0 END",
+                     query.getColumns().get(0).getExpression());
+        assertEquals("tax_multiplier", query.getColumns().get(0).getAlias());
+        assertEquals(1, query.getFromSources().size());
+        assertEquals("products", query.getFromSources().get(0).getTableName());
+    }
+
+    @Test
+    @DisplayName("Test SELECT with multiple columns including CASE expression")
+    void testSelectWithMultipleColumnsIncludingCase() {
+        String sql = "SELECT id, name, CASE WHEN price > 100 THEN 'High' ELSE 'Low' END AS price_category FROM products";
+        Query query = parser.parse(sql);
+
+        // Verify query structure
+        assertEquals(3, query.getColumns().size());
+        assertEquals("id", query.getColumns().get(0).getExpression());
+        assertEquals("name", query.getColumns().get(1).getExpression());
+        assertEquals("CASE WHEN price>100 THEN 'High' ELSE 'Low' END",
+                     query.getColumns().get(2).getExpression());
+        assertEquals("price_category", query.getColumns().get(2).getAlias());
+    }
+
+    @Test
+    @DisplayName("Test CASE expression in WHERE clause")
+    void testCaseExpressionInWhereClause() {
+        String sql = "SELECT * FROM products WHERE CASE WHEN category = 'Electronics' THEN price < 500 ELSE price < 100 END";
+        Query query = parser.parse(sql);
+
+        // Verify query structure
+        assertEquals(1, query.getColumns().size());
+        assertEquals("*", query.getColumns().get(0).getExpression());
+        assertEquals(1, query.getFromSources().size());
+        assertNotNull(query.getWhereCondition());
+        String whereCondition = query.getWhereCondition().toString();
+        assertTrue(whereCondition.contains("CASE WHEN category='Electronics' THEN price<500 ELSE price<100 END"));
+    }
+
+    @Test
+    @DisplayName("Test CASE expression in ORDER BY clause")
+    void testCaseExpressionInOrderByClause() {
+        String sql = "SELECT * FROM products ORDER BY CASE WHEN category = 'Priority' THEN 1 ELSE 2 END, name";
+        Query query = parser.parse(sql);
+
+        // Verify query structure
+        assertEquals(1, query.getColumns().size());
+        assertEquals("*", query.getColumns().get(0).getExpression());
+        assertEquals(1, query.getFromSources().size());
+        assertEquals(2, query.getOrderByColumns().size());
+        assertTrue(query.getOrderByColumns().get(0).getColumn().contains("CASE WHEN category='Priority' THEN 1 ELSE 2 END"));
+        assertEquals("name", query.getOrderByColumns().get(1).getColumn());
     }
 }

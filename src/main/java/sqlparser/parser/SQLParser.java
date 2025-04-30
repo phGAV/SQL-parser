@@ -226,7 +226,10 @@ public class SQLParser {
      * @return true if the token is likely a typo of the keyword
      */
     private boolean isLikelyTypoOf(Tokenizer.Token token, String keyword) {
-
+        // If the token is already a recognized SQL keyword, it's not a typo
+        if (token.getType() == Tokenizer.TokenType.KEYWORD) {
+            return false;
+        }
         String tokenValue = token.getValue().toUpperCase();
         String expectedKeyword = keyword.toUpperCase();
 
@@ -386,6 +389,11 @@ public class SQLParser {
             }
 
         return expressionBuilder.toString();
+        // Check if the expression starts with CASE
+        } else if (currentToken().getType() == Tokenizer.TokenType.KEYWORD &&
+                 currentToken().getValue().equalsIgnoreCase("CASE")) {
+            // Parse CASE expression
+            return parseCaseExpression();
         }
         // Parse the first token (could be an identifier, literal, etc.)
         Tokenizer.Token token = consumeToken();
@@ -414,6 +422,49 @@ public class SQLParser {
     }
 
     /**
+     * Parses a CASE expression.
+     *
+     * @return The parsed CASE expression as a string
+     */
+    private String parseCaseExpression() {
+        StringBuilder caseBuilder = new StringBuilder();
+
+        // Append "CASE"
+        caseBuilder.append(consumeToken().getValue()).append(" ");
+
+        // Check for optional CASE value (simple case)
+        if (!matchToken(Tokenizer.TokenType.KEYWORD, "WHEN")) {
+            caseBuilder.append(parseSimpleExpression()).append(" ");
+        }
+
+        // Parse WHEN...THEN clauses
+        while (consumeIfMatch(Tokenizer.TokenType.KEYWORD, "WHEN")) {
+            caseBuilder.append("WHEN ");
+
+            // Parse the WHEN condition
+            caseBuilder.append(parseSimpleExpression()).append(" ");
+
+            expectToken(Tokenizer.TokenType.KEYWORD, "THEN");
+            caseBuilder.append("THEN ");
+
+            // Parse the THEN result
+            caseBuilder.append(parseSimpleExpression()).append(" ");
+        }
+
+        // Parse optional ELSE clause
+        if (consumeIfMatch(Tokenizer.TokenType.KEYWORD, "ELSE")) {
+            caseBuilder.append("ELSE ");
+            caseBuilder.append(parseSimpleExpression()).append(" ");
+        }
+
+        // Parse END
+        expectToken(Tokenizer.TokenType.KEYWORD, "END");
+        caseBuilder.append("END");
+
+        return caseBuilder.toString();
+    }
+
+    /**
      * Parses a part of an expression (operator and operand) and adds it to the expression builder.
      *
      * @param expressionBuilder The StringBuilder to append to
@@ -434,7 +485,11 @@ public class SQLParser {
              currentToken().getValue().equalsIgnoreCase("HAVING") ||
              currentToken().getValue().equalsIgnoreCase("ORDER") ||
              currentToken().getValue().equalsIgnoreCase("LIMIT") ||
-             currentToken().getValue().equalsIgnoreCase("OFFSET"))) {
+             currentToken().getValue().equalsIgnoreCase("OFFSET") ||
+             currentToken().getValue().equalsIgnoreCase("THEN") ||
+             currentToken().getValue().equalsIgnoreCase("ELSE") ||
+             currentToken().getValue().equalsIgnoreCase("END") ||
+             currentToken().getValue().equalsIgnoreCase("WHEN"))) {
             return false;
         }
 
@@ -734,14 +789,35 @@ public class SQLParser {
             expectToken(Tokenizer.TokenType.PARENTHESIS_CLOSE, ")");
             condition.addNestedCondition(nestedCondition);
         } else {
-            // Simple condition
+            // Parse the left expression
             Object leftExpr = parseExpression();
-            String operator = parseOperator();
-            Object rightExpr = parseExpression();
+            // Check if we've reached the end of the condition or a CASE expression is used as a complete boolean expression
+            boolean isEndOfCondition = currentTokenIndex >= tokens.size() ||
+                                       (currentToken().getType() == Tokenizer.TokenType.KEYWORD &&
+                                        (currentToken().getValue().equalsIgnoreCase("AND") ||
+                                         currentToken().getValue().equalsIgnoreCase("OR") ||
+                                         currentToken().getValue().equalsIgnoreCase("GROUP") ||
+                                         currentToken().getValue().equalsIgnoreCase("HAVING") ||
+                                         currentToken().getValue().equalsIgnoreCase("ORDER") ||
+                                         currentToken().getValue().equalsIgnoreCase("LIMIT") ||
+                                         currentToken().getValue().equalsIgnoreCase("OFFSET"))) ||
+                                       currentToken().getType() == Tokenizer.TokenType.PARENTHESIS_CLOSE ||
+                                       (leftExpr instanceof String && ((String)leftExpr).startsWith("CASE ") &&
+                                        ((String)leftExpr).endsWith("END"));
+            if (isEndOfCondition) {
+                // Expression as a complete condition (like a CASE expression returning a boolean)
+                condition.setLeftExpression(leftExpr);
+                condition.setOperator("="); // Using a dummy operator for boolean expressions
+                condition.setRightExpression("TRUE"); // Using TRUE as dummy right expression
+            } else {
+                // Regular condition with operator and right expression
+                String operator = parseOperator();
+                Object rightExpr = parseExpression();
 
-            condition.setLeftExpression(leftExpr);
-            condition.setOperator(operator);
-            condition.setRightExpression(rightExpr);
+                condition.setLeftExpression(leftExpr);
+                condition.setOperator(operator);
+                condition.setRightExpression(rightExpr);
+            }
         }
 
         // Check for logical operators (AND, OR)
@@ -765,6 +841,12 @@ public class SQLParser {
         // Check if we have tokens before accessing
         if (currentTokenIndex >= tokens.size()) {
             throw new SQLParserException("Expected expression, but reached end of query");
+        }
+
+        // Check for CASE expression
+        if (currentToken().getType() == Tokenizer.TokenType.KEYWORD &&
+            currentToken().getValue().equalsIgnoreCase("CASE")) {
+            return parseCaseExpression();
         }
 
         // Check for aggregate functions
@@ -804,9 +886,7 @@ public class SQLParser {
             expression.append(")");
 
             return expression.toString();
-        }
-        // For simplicity, we'll just parse simple expressions for now
-        else if (currentToken().getType() == Tokenizer.TokenType.IDENTIFIER) {
+        } else if (currentToken().getType() == Tokenizer.TokenType.IDENTIFIER) {
             StringBuilder sb = new StringBuilder(consumeToken().getValue());
 
             // Handle table.column notation

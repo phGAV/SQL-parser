@@ -1,4 +1,4 @@
-package main.java.sqlparser.parser;
+package sqlparser.parser;
 
 import java.util.ArrayList;
 import java.util.Arrays;

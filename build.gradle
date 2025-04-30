@@ -34,7 +34,7 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = 'main.java.sqlparser.Main'
+    mainClass = 'sqlparser.Main'
 }
 
 tasks.named('test') {

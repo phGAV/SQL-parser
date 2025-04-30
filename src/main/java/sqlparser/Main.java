@@ -1,8 +1,8 @@
-package main.java.sqlparser;
+package sqlparser;
 
-import main.java.sqlparser.model.*;
-import main.java.sqlparser.parser.*;
-import main.java.sqlparser.util.*;
+import sqlparser.model.*;
+import sqlparser.parser.*;
+import sqlparser.util.*;
 
 /**
  * Main class to demonstrate the SQL parser functionality.

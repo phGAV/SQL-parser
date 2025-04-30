@@ -1,4 +1,4 @@
-package main.java.sqlparser.model;
+package sqlparser.model;
 
 import java.util.ArrayList;
 import java.util.List;

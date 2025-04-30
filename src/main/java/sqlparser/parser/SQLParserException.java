@@ -1,4 +1,4 @@
-package main.java.sqlparser.parser;
+package sqlparser.parser;
 
 /**
  * Custom exception for SQL parsing errors.

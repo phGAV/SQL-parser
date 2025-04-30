@@ -1,4 +1,4 @@
-package main.java.sqlparser.model;
+package sqlparser.model;
 
 /**
  * Represents the different types of SQL joins.

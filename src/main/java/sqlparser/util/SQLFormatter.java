@@ -1,6 +1,6 @@
-package main.java.sqlparser.util;
+package sqlparser.util;
 
-import main.java.sqlparser.model.*;
+import sqlparser.model.*;
 
 import java.util.List;
 

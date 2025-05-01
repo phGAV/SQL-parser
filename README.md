@@ -113,7 +113,7 @@ System.out.println(formattedSql);
 
 ## Optimization Plan
 
-# High-Priority Improvements
+### High-Priority Improvements
 
 1. **Parser Structure**
     - Break down large methods in SQLParser (parseCondition, parseExpression)
@@ -127,13 +127,13 @@ System.out.println(formattedSql);
     - Optimize tokenization to reduce string operations
     - Reduce object creation during parsing
 
-## Medium-Priority Improvements
+### Medium-Priority Improvements
 
 4. **Features & Testing**
    - Enhance subquery and complex JOIN support
    - Add more test cases for edge cases and error scenarios
 
-## Low-Priority Improvements
+### Low-Priority Improvements
 
 5. **Documentation & Usability**
     - Enhance JavaDoc for all public APIs

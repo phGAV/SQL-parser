@@ -110,3 +110,31 @@ System.out.println(formattedSql);
 ## Requirements
 
 - Java 21 or higher
+
+## Optimization Plan
+
+# High-Priority Improvements
+
+1. **Parser Structure**
+    - Break down large methods in SQLParser (parseCondition, parseExpression)
+    - Extract specialized parsers
+    - Implement expression parsing with operator precedence
+
+2. **Error Handling**
+    - Improve error messages with context and position information
+
+3. **Performance**
+    - Optimize tokenization to reduce string operations
+    - Reduce object creation during parsing
+
+## Medium-Priority Improvements
+
+4. **Features & Testing**
+   - Enhance subquery and complex JOIN support
+   - Add more test cases for edge cases and error scenarios
+
+## Low-Priority Improvements
+
+5. **Documentation & Usability**
+    - Enhance JavaDoc for all public APIs
+    - Create a matrix of supported SQL features
